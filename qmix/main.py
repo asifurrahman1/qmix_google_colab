@@ -7,9 +7,7 @@ from arguments import get_common_args, get_coma_args, get_mixer_args, get_centra
 if __name__ == '__main__':
     for i in range(8):
         args = get_common_args()
-        
         args = get_mixer_args(args)
-
         env = StarCraft2Env(map_name=args.map_name,
                             step_mul=args.step_mul,
                             difficulty=args.difficulty,
