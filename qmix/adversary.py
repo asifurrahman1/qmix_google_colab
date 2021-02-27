@@ -31,20 +31,24 @@ class Adversary:
     action = torch.argmin(q_value)  #USES ARGMAX FOR ACTION
     return action
 
-  def strategic_time_attack(self, q_val, avail_actions, threshold):
+  def strategic_time_attack(self, q_val, avail_action, epsilon,  threshold):
     q_value = q_val
-    avail_actions = torch.tensor(avail_actions, dtype=torch.float32).unsqueeze(0)
-    q_value[avail_actions == 0.0] = -1* float("inf")
+    avail_actions_ind = np.nonzero(avail_action)[0]
+    avail_action = torch.tensor(avail_action, dtype=torch.float32).unsqueeze(0)
+    q_value[avail_action == 0.0] = -1* float("inf")
     maximum = torch.max(q_value)
-    q_value[avail_actions == 0.0] = float("inf")
+    q_value[avail_action == 0.0] = float("inf")
     minimum = torch.min(q_value)
     diff = maximum - minimum 
     #print("Difference =", diff)
     if diff > threshold:
       action = torch.argmin(q_value)
     else:
-      q_value[avail_actions == 0.0] = -1* float("inf")
-      action = torch.argmax(q_value)
+      if np.random.uniform() < epsilon:
+        action = np.random.choice(avail_actions_ind)
+      else:
+        q_value[avail_action == 0.0] = -1* float("inf")
+        action = torch.argmax(q_value)
     return action, diff
 
 
