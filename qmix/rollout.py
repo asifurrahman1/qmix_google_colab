@@ -59,21 +59,21 @@ class RolloutWorker:
                 #=========IF STATE PERTURBATION CHANGE HERE ================
                 #===========================================================
            
-                if self.args.victim_agent == agent_id and self.args.adversary and np.random.uniform() <= self.args.attack_rate:
+                if self.args.victim_agent == agent_id and self.args.adversary:
                   #USE ADVERSARIAL ATTACK HERE
                   #print("Attack launched")
-                  if self.args.attack_name == "random":
+                  if self.args.attack_name == "random" and np.random.uniform() <= self.args.attack_rate:
                     action = self.adversarial.random_attack(obs[agent_id], last_action[agent_id], agent_id,
                                                        avail_action, epsilon, evaluate)
-                  elif self.args.attack_name == "random_time":
+                  elif self.args.attack_name == "random_time"  and np.random.uniform() <= self.args.attack_rate:
                     #self.adversarial.policy.init_hidden(1)
                     q_val = self.agents.get_qvalue(obs[agent_id], last_action[agent_id], agent_id, avail_action, epsilon, evaluate)
                     action = self.adversarial.random_time_attack(q_val, avail_action)
                     #print("attack successful")
                   elif self.args.attack_name == "strategic":
-                    demo_thrs = 0.5
+                    demo_thrs = 10
                     q_val = self.agents.get_qvalue(obs[agent_id], last_action[agent_id], agent_id, avail_action, epsilon, evaluate)
-                    action, diff = self.adversarial.strategic_time_attack(q_val, avail_action, demo_thrs)
+                    action, diff = self.adversarial.strategic_time_attack(q_val, avail_action, epsilon, demo_thrs )
                     threshold.append(diff)
                     # action = self.agents.choose_strategic_action(obs[agent_id], last_action[agent_id], agent_id,
                     #                                    avail_action, epsilon, evaluate)
