@@ -26,8 +26,13 @@ class Runner:
         self.episode = []
         self.q_diff = []
         self.save_path = self.args.result_dir + '/' + args.alg + '/' + args.map_name
-        self.save_path1 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/attack_data'
-        self.save_path1 = self.save_path1+'/'+self.args.attack_name+'/'+'atk_rate_{}'.format(self.args.attack_rate)
+        
+        if self.args.attack_name == "strategic":
+          self.save_path1 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/attack_data'
+          self.save_path1 = self.save_path1+'/'+self.args.attack_name+'/'+'atk_threshold_{}'.format(self.args.strategic_threshold)
+        else:
+          self.save_path1 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/attack_data'
+          self.save_path1 = self.save_path1+'/'+self.args.attack_name+'/'+'atk_rate_{}'.format(self.args.attack_rate)
 
         self.save_path2 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/normal'
         if not os.path.exists(self.save_path):
