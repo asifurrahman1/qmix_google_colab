@@ -30,6 +30,7 @@ def get_common_args():
     parser.add_argument('--victim_agent', type=int, default=0, help='Set which agent would be the victim for attack')
     parser.add_argument('--adversary', type=bool, default=False, help='whether to use adversarial policy')
     parser.add_argument('--attack_rate', type=float, default=1.0, help='Set Attack Percentage' )
+    parser.add_argument('--strategic_threshold', type=float, default=1.0, help='Set Strategic Attack Threshold' )
     parser.add_argument('--attack_name',type=str, default="random", help='Which Adversarial attack to use')
     args = parser.parse_args()
     return args
