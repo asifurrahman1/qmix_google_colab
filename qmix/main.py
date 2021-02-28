@@ -25,6 +25,7 @@ if __name__ == '__main__':
         args.episode_limit = env_info["episode_limit"]
         args.alg = "qmix"    
         args.attack_name = "strategic"    #"random"   "random_time"  "strategic"
+        args.strategic_threshold = 0.55   #set threshold for strategic time attack
         args.victim_agent= 2              # victim agent to attack
         args.attack_rate = 0.25           #Theshold value for the frequency of attack
         args.adversary = True;            #False = Optimal Qmix; True = If you want to enforce any of the attack ("random"   "random_time"  "strategic") 
