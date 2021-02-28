@@ -71,7 +71,7 @@ class RolloutWorker:
                     action = self.adversarial.random_time_attack(q_val, avail_action)
                     #print("attack successful")
                   elif self.args.attack_name == "strategic":
-                    demo_thrs = args.strategic_threshold
+                    demo_thrs = self.args.strategic_threshold
                     q_val = self.agents.get_qvalue(obs[agent_id], last_action[agent_id], agent_id, avail_action, epsilon, evaluate)
                     action, diff = self.adversarial.strategic_time_attack(q_val, avail_action, epsilon, demo_thrs )
                     threshold.append(diff)
