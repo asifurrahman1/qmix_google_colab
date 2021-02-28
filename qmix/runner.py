@@ -147,6 +147,8 @@ class Runner:
           np.save(self.save_path1 + '/adv_data', self.adv_data)
           if self.args.attack_name == 'strategic':
             fig2.savefig(self.save_path1 + '/max_min_diff_plt_{}.png', format='png')
+            pyplot.close(fig2)
+          pyplot.close(fig)
         else:
           if not os.path.exists(self.save_path2):
             os.makedirs(self.save_path2)
@@ -155,6 +157,7 @@ class Runner:
           np.save(self.save_path2 + '/episode_data', self.data_set)
           np.save(self.save_path2 + '/win_rates_{}'.format(text), self.win_rates)
           np.save(self.save_path2 + '/episode_rewards_{}'.format(text), self.episode_rewards)
-          fig.close()
-          fig2.close()
+          pyplot.close(fig)
+          
+           
 
