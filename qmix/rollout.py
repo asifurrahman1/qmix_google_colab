@@ -166,6 +166,11 @@ class RolloutWorker:
         
         for key in episode.keys():
             episode[key] = np.array([episode[key]])
+        for key in data_set.keys():
+            data_set[key] = np.array([data_set[key]])
+        for key in adv_data.keys():
+            adv_data[key] = np.array([adv_data[key]])
+            
         if not evaluate:
             self.epsilon = epsilon
    
