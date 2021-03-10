@@ -26,18 +26,20 @@ class Runner:
         self.episode = []
         self.q_diff = []
         self.save_path = self.args.result_dir + '/' + args.alg + '/' + args.map_name
-        
-        if self.args.attack_name == "strategic":
-          self.save_path1 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/attack_data'
-          self.save_path1 = self.save_path1+'/'+self.args.attack_name+'/'+'atk_threshold_{}'.format(self.args.strategic_threshold)
-        else:
-          self.save_path1 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/attack_data'
-          self.save_path1 = self.save_path1+'/'+self.args.attack_name+'/'+'atk_rate_{}'.format(self.args.attack_rate)
+        self.save_path1 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/attack_data'
+        self.save_path1 = self.save_path1+'/'+self.args.attack_name+'/'+'atk_rate_{}'.format(self.args.attack_rate)
 
         self.save_path2 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/normal'
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
-
+    def save_data(self,data):
+      if not os.path.exists(self.save_path2):
+        os.makedirs(self.save_path2)
+      text = "normal"  
+      np.save(self.save_path2 + '/episode_data', data)
+      np.save(self.save_path2 + '/win_rates_{}'.format(text), self.win_rates)
+      np.save(self.save_path2 + '/episode_rewards_{}'.format(text), self.episode_rewards)
+      
     def run(self, num):
         time_steps, train_steps, evaluate_steps = 0, 0, -1
         while time_steps < self.args.n_steps:
@@ -51,24 +53,33 @@ class Runner:
                 self.plt(num)
                 evaluate_steps += 1
             episodes = []
-         
+            data = []
+            ad_data = []
+            thrs_diff = []
+            
+          
             for episode_idx in range(self.args.n_episodes):
-                episode, _, _, steps,_,_,_ = self.rolloutWorker.generate_episode(episode_idx)
+                episode, _, _, steps,d_set,a_data,thrs = self.rolloutWorker.generate_episode(episode_idx)
                 episodes.append(episode)
+                data.append(d_set)
+                ad_data.append(a_data)
+                thrs_diff.append(thrs)
                 time_steps += steps
                 # print(_)
-           
+            self.save_data(data)
+
             episode_batch = episodes[0]
             episodes.pop(0)
             for episode in episodes:
                 for key in episode_batch.keys():
                     episode_batch[key] = np.concatenate((episode_batch[key], episode[key]), axis=0)
-            
+            #========TRAINING STEP===================
             self.buffer.store_episode(episode_batch)
             for train_step in range(self.args.train_steps):
               mini_batch = self.buffer.sample(min(self.buffer.current_size, self.args.batch_size))
               self.agents.train(mini_batch, train_steps)
               train_steps += 1
+
         win_rate, episode_reward = self.evaluate()
         print('win_rate is ', win_rate)
         self.win_rates.append(win_rate)
@@ -147,17 +158,14 @@ class Runner:
           np.save(self.save_path1 + '/adv_data', self.adv_data)
           if self.args.attack_name == 'strategic':
             fig2.savefig(self.save_path1 + '/max_min_diff_plt_{}.png', format='png')
-            pyplot.close(fig2)
-          pyplot.close(fig)
         else:
           if not os.path.exists(self.save_path2):
             os.makedirs(self.save_path2)
           text = 'normal'
           fig.savefig(self.save_path2 + '/plt_{}.png'.format(text), format='png')
-          np.save(self.save_path2 + '/episode_data', self.data_set)
-          np.save(self.save_path2 + '/win_rates_{}'.format(text), self.win_rates)
-          np.save(self.save_path2 + '/episode_rewards_{}'.format(text), self.episode_rewards)
-          pyplot.close(fig)
-          
-           
+          # np.save(self.save_path2 + '/episode_data', self.data_set)
+          # np.save(self.save_path2 + '/win_rates_{}'.format(text), self.win_rates)
+          # np.save(self.save_path2 + '/episode_rewards_{}'.format(text), self.episode_rewards)
+          #fig.close()
+          #fig2.close()
 
