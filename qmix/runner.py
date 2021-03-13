@@ -32,13 +32,11 @@ class Runner:
         self.save_path2 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/normal'
         if not os.path.exists(self.save_path):
             os.makedirs(self.save_path)
-    def save_data(self,data):
+            
+   def save_data(self,data):
       if not os.path.exists(self.save_path2):
         os.makedirs(self.save_path2)
-      text = "normal"  
       np.save(self.save_path2 + '/episode_data', data)
-      np.save(self.save_path2 + '/win_rates_{}'.format(text), self.win_rates)
-      np.save(self.save_path2 + '/episode_rewards_{}'.format(text), self.episode_rewards)
       
     def run(self, num):
         time_steps, train_steps, evaluate_steps = 0, 0, -1
@@ -53,26 +51,29 @@ class Runner:
                 self.plt(num)
                 evaluate_steps += 1
             episodes = []
-            data = []
-            ad_data = []
-            thrs_diff = []
-            
-          
+            datas = []
+           
             for episode_idx in range(self.args.n_episodes):
-                episode, _, _, steps,d_set,a_data,thrs = self.rolloutWorker.generate_episode(episode_idx)
+                episode, _, _, steps,data,_,_ = self.rolloutWorker.generate_episode(episode_idx)
                 episodes.append(episode)
-                data.append(d_set)
-                ad_data.append(a_data)
-                thrs_diff.append(thrs)
+                datas.append(data)
                 time_steps += steps
                 # print(_)
-            self.save_data(data)
+            
 
             episode_batch = episodes[0]
             episodes.pop(0)
             for episode in episodes:
                 for key in episode_batch.keys():
                     episode_batch[key] = np.concatenate((episode_batch[key], episode[key]), axis=0)
+                    
+            data_set = datas[0]
+            datas.pop(0)
+            for d in datas:
+                for key in data_set.keys():
+                  data_set[key] = np.concatenate((data_set[key], d[key]), axis=0)
+            self.save_data(data_set)
+            
             #========TRAINING STEP===================
             self.buffer.store_episode(episode_batch)
             for train_step in range(self.args.train_steps):
