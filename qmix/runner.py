@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 class Runner:
     def __init__(self, env, args):
         self.env = env
+        self.count = 1
         self.agents = Agents(args)
         self.adversarial = Adversary(args)
         self.rolloutWorker = RolloutWorker(env, self.agents, args, self.adversarial)
@@ -21,27 +22,32 @@ class Runner:
         self.args = args
         self.win_rates = []
         self.episode_rewards = []
-        self.data_set = []
+        self.expert_data = []
         self.adv_data =[]
         self.episode = []
         self.q_diff = []
         self.save_path = self.args.result_dir + '/' + args.alg + '/' + args.map_name
         self.save_path1 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/attack_data'
         self.save_path1 = self.save_path1+'/'+self.args.attack_name+'/'+'atk_rate_{}'.format(self.args.attack_rate)
-
+        
         self.save_path2 = '/gdrive/MyDrive/Colab Notebooks/Saved_data/result' + '/' + args.alg + '/' + args.map_name+'/normal'
-        if not os.path.exists(self.save_path):
-            os.makedirs(self.save_path)
-            
-   def save_data(self,data):
+        # if not os.path.exists(self.save_path2):
+        #   os.makedirs(self.save_path2)
+    def savedata(self, data):
       if not os.path.exists(self.save_path2):
         os.makedirs(self.save_path2)
       np.save(self.save_path2 + '/episode_data', data)
-      
+      print('saved_called')
+
+    # def add_tractectory(self, data):
+    #     data_set.append(data)
+
     def run(self, num):
         time_steps, train_steps, evaluate_steps = 0, 0, -1
+        data = []
         while time_steps < self.args.n_steps:
             #print('Run {}, time_steps {}'.format(num, time_steps))
+            
             if time_steps // self.args.evaluate_cycle > evaluate_steps:
                 win_rate, episode_reward = self.evaluate()
                 print('Time_steps {}:'.format(time_steps),"Win rate:", win_rate,"Episode reward:", episode_reward)
@@ -50,52 +56,53 @@ class Runner:
                 self.episode_rewards.append(episode_reward)
                 self.plt(num)
                 evaluate_steps += 1
+                if evaluate_steps>2:
+                  self.savedata(data)
+            d_list = []
             episodes = []
-            datas = []
-           
             for episode_idx in range(self.args.n_episodes):
-                episode, _, _, steps,data,_,_ = self.rolloutWorker.generate_episode(episode_idx)
+                episode, _, _, steps,t_data,_,_ = self.rolloutWorker.generate_episode(episode_idx)
                 episodes.append(episode)
-                datas.append(data)
+                v = t_data.copy()
                 time_steps += steps
+                if evaluate_steps>2:
+                  d_list.append(v)
                 # print(_)
-            
-
+            if evaluate_steps>2:
+              data.append(d_list)
             episode_batch = episodes[0]
             episodes.pop(0)
             for episode in episodes:
                 for key in episode_batch.keys():
                     episode_batch[key] = np.concatenate((episode_batch[key], episode[key]), axis=0)
-                    
-            data_set = datas[0]
-            datas.pop(0)
-            for d in datas:
-                for key in data_set.keys():
-                  data_set[key] = np.concatenate((data_set[key], d[key]), axis=0)
-            self.save_data(data_set)
-            
-            #========TRAINING STEP===================
+
             self.buffer.store_episode(episode_batch)
-            for train_step in range(self.args.train_steps):
-              mini_batch = self.buffer.sample(min(self.buffer.current_size, self.args.batch_size))
-              self.agents.train(mini_batch, train_steps)
-              train_steps += 1
+            if evaluate_steps <2:
+              for train_step in range(self.args.train_steps):
+                mini_batch = self.buffer.sample(min(self.buffer.current_size, self.args.batch_size))
+                self.agents.train(mini_batch, train_steps)
+                train_steps += 1
 
         win_rate, episode_reward = self.evaluate()
         print('win_rate is ', win_rate)
         self.win_rates.append(win_rate)
         self.episode_rewards.append(episode_reward)
         self.plt(num)
-
+        
+        
     def evaluate(self):
         win_number = 0
         episode_rewards = 0
+        data = []
         for epoch in range(self.args.evaluate_epoch):
             #============>
-            self.episode, episode_reward, win_tag, _, self.data_set, self.adv_data, self.q_diff = self.rolloutWorker.generate_episode(epoch, evaluate=True)
+            self.episode, episode_reward, win_tag, _, t_data, self.adv_data, self.q_diff = self.rolloutWorker.generate_episode(epoch, evaluate=True)
+            d_data = t_data.copy()
+            data.append(d_data) 
             episode_rewards += episode_reward
             if win_tag:
                 win_number += 1
+        # self.savedata()
         return win_number / self.args.evaluate_epoch, episode_rewards / self.args.evaluate_epoch
     
   
@@ -165,8 +172,7 @@ class Runner:
           text = 'normal'
           fig.savefig(self.save_path2 + '/plt_{}.png'.format(text), format='png')
           # np.save(self.save_path2 + '/episode_data', self.data_set)
-          # np.save(self.save_path2 + '/win_rates_{}'.format(text), self.win_rates)
-          # np.save(self.save_path2 + '/episode_rewards_{}'.format(text), self.episode_rewards)
-          #fig.close()
-          #fig2.close()
-
+          np.save(self.save_path2 + '/win_rates_{}'.format(text), self.win_rates)
+          np.save(self.save_path2 + '/episode_rewards_{}'.format(text), self.episode_rewards)
+          # fig.close()
+          # fig2.close()
